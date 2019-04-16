@@ -1,10 +1,10 @@
 {
-    "full_name": "Braulio Tonaco",
-    "email": "Tonaco.Braulio@gmail.com",
-    "username": "tonacobr",
-    "first_name": "Braulio",
-    "last_name": "Tonaco",
-    "password": "cacete02",
+    "full_name":    "Braulio Tonaco",
+    "email":        "Tonaco.Braulio@gmail.com",
+    "username":     "tonacobr",
+    "first_name":   "Braulio",
+    "last_name":    "Tonaco",
+    "password":     "cacete02",
     "organization": "tabajara",
     "ips": {
         "workstation": "172.28.128.4",
@@ -12,4 +12,3 @@
         "chef-node-1": "172.28.128.6"
     }
 }
-
