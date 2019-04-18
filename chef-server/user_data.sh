@@ -22,8 +22,7 @@ mkdir -p $chef_home
 mkdir -p '/apps/chef/'
 mkdir -p '/apps/chef/pem_files'
 
-# Download the package from https://downloads.chef.io/chef-server/.
-# RHEL7 chef-server-rpm: https://packages.chef.io/files/stable/chef-server/12.19.31/el/7/chef-server-core-12.19.31-1.el7.x86_64.rpm
+# Download and Install Chef-Server rpm
 if [ ! -f "${chef_home}/${chef_server_rpm}" ]; then
     wget $chef_server_link -P $chef_home
 fi
