@@ -14,6 +14,12 @@ Vagrant.configure("2") do |config|
         perm.destination = "/apps/workstation_conf"
     end
 
+    # Copy permission file to allow ssh between workstation/chef-node-1
+    config.vm.provision "file" do |perm|
+        perm.source      = "../chef-node-1/.vagrant/machines/default/virtualbox/private_key"
+        perm.destination = "/apps/learn-chef/pems/chef-node-1/private_key"
+    end
+    
     # Copy config.rb file
     config.vm.provision "file" do |conf|
         conf.source      = "./etc/config.rb"
@@ -28,8 +34,8 @@ Vagrant.configure("2") do |config|
             info["email"], 
             info["ips"]["chef-server"],
             info['username'],
-            info["organization"]
-        ]
+            info["organization"],
+            info["ips"]["chef-node-1"] ]
     end
 
     # Machine Specs
