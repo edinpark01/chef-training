@@ -1,0 +1,47 @@
+# Require JSON module
+require 'json'
+info = JSON.parse(File.read(File.join('../misc_info.json')))
+
+Vagrant.configure("2") do |config|
+    config.vm.box           = "centos/7"
+    config.vm.hostname      = "chef-workstation"
+    config.vm.network         "private_network", ip: info["ips"]["workstation"]
+    config.vm.synced_folder   "./data", "/apps/"
+
+    # Copy permission files to allow workstation/chef-server communication
+    config.vm.provision "file" do |perm|
+        perm.source      = "../chef-server/data/chef/pem_files"
+        perm.destination = "/apps/workstation_conf"
+    end
+
+    # Copy permission file to allow ssh between workstation/chef-node-1
+    config.vm.provision "file" do |perm|
+        perm.source      = "../chef-node-1/.vagrant/machines/default/virtualbox/private_key"
+        perm.destination = "/apps/learn-chef/pems/chef-node-1/private_key"
+    end
+    
+    # Copy config.rb file
+    config.vm.provision "file" do |conf|
+        conf.source      = "./etc/config.rb"
+        conf.destination = "/apps/workstation_conf/config.rb"
+    end
+    
+    # Provision Machine
+    config.vm.provision "shell" do |shell|
+        shell.path = "user_data.sh"
+        shell.args = [
+            info["full_name"], 
+            info["email"], 
+            info["ips"]["chef-server"],
+            info['username'],
+            info["organization"],
+            info["ips"]["chef-node-1"] ]
+    end
+
+    # Machine Specs
+    config.vm.provider "virtualbox" do |vb|
+        vb.name   = "chef-workstation"
+        vb.memory = "512"
+        vb.cpus   = "1"
+    end
+end

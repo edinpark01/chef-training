@@ -1,0 +1,22 @@
+require 'json'
+info = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../misc_info.json')))
+
+Vagrant.configure("2") do |config|
+    config.vm.box           = "centos/7"
+    config.vm.hostname      = "chef-node-1"
+    config.vm.network       "private_network", ip: info["ips"]["chef-node-1"]
+    config.vm.synced_folder "./data", "/apps/"
+
+    # Machine Specs
+    config.vm.provider "virtualbox" do |vb|
+        vb.name   = "chef-node-1"
+        vb.memory = "512"
+        vb.cpus   = "1"
+    end
+
+    # Provision Machine
+    config.vm.provision "shell" do |shell|
+        shell.path = "user_data.sh"
+        shell.args = [ info["ips"]["chef-server"] ]
+    end
+end
