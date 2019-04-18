@@ -9,30 +9,36 @@ node_ip=$6
 yum update -y 
 yum -y install ntp ntpdate wget which git tzdata
 
-if [ ! -f /apps/downloads/$chefdk ]; then
+# Installs ChefDK on Workstation VM
+if [ ! -f /apps/downloads/chefdk-3.8.14-1.el7.x86_64.rpm ]; then
+    echo "==> Download and Install ChefDK"
+
     mkdir -p /apps/downloads
-    chefdk="chefdk-3.8.14-1.el7.x86_64.rpm"
-    wget "https://packages.chef.io/files/stable/chefdk/3.8.14/el/7/${chefdk}" -P /apps/downloads
-    rpm -Uhv /apps/downloads/$chefdk
+    wget "https://packages.chef.io/files/stable/chefdk/3.8.14/el/7/chefdk-3.8.14-1.el7.x86_64.rpm" -P /apps/downloads
+    rpm -Uhv /apps/downloads/chefdk-3.8.14-1.el7.x86_64.rpm
 fi
 
 # Sets up envirtonment variables
+echo "==> Setup environment variables"
 echo 'export PATH="/opt/chefdk/embedded/bin:$PATH"' >> /home/vagrant/.bash_profile
 echo 'export TZ="America/New_York"'                 >> /home/vagrant/.bash_profile
-echo "export USERNAME=${username}"                  >> /home/vagrant/.bash_profile
-echo "export ORGANIZATION=${organization}"          >> /home/vagrant/.bash_profile
+echo "export CHEF_USERNAME=${username}"             >> /home/vagrant/.bash_profile
+echo "export CHEF_ORGANIZATION=${organization}"     >> /home/vagrant/.bash_profile
 source ~/.bash_profile 
 
 # Configure git
-git config --system user.name $full_name 
+echo "==> Configure git"
+git config --system user.name  $full_name 
 git config --system user.email $email
 
 # Adds server and node ips to known hosts file
-echo "${chef_server_ip}     chef-server" >> /etc/hosts
-echo "${node_ip}       chef-node-1" >> /etc/hosts
+echo "==> Appends Chef Server and Chef Node ips to the etc/hosts file"
+echo "${chef_server_ip} chef-server" >> /etc/hosts
+echo "${node_ip}        chef-node-1" >> /etc/hosts
 
 # Create the Chef repository
 if [ ! -d "/apps/chef-repo" ]; then
+    echo "==> Creates Chef Repository"
     chef generate repo /apps/chef-repo
     mkdir -p /apps/chef-repo/.chef
     echo '.chef' >> /apps/chef-repo/.gitignore
@@ -41,24 +47,27 @@ fi
 
 # Tutorial | UPLOAD Cookbook to chef-server
 if [ ! -d "/apps/learn-chef/.chef" ]; then
-    echo "==> Uploading learn-chef_httpd recipe to chef-server"
-
+    echo "==> Uploading sample cookbook onto chef server"
     mkdir -p /apps/learn-chef/.chef
     cp -r /apps/workstation_conf/* /apps/learn-chef/.chef
     mkdir -p /apps/learn-chef/cookbooks
-    git clone https://github.com/learn-chef/learn_chef_httpd.git \  # Clone demo chef cookbook
-              /apps/learn-chef/cookbooks/  
+    
+    # Check SSL connectivity
+    echo "==> Checking SSL Connectivity"
     knife ssl fetch
-    knife ssl status
-    knife cookbook upload learn_chef_httpd                          # Upload cookbook into server
+    knife ssl check
+    
+    # Upload cookbook onto Chef Server
+    echo "==> Cloning Sample Cookbook"
+    git clone https://github.com/learn-chef/learn_chef_httpd.git /apps/learn-chef/cookbooks/learn_chef_httpd
+    knife cookbook upload learn_chef_httpd             
 
-    # Bootstrap a chef node
-    cd /apps/learn-chef
-    knife  \
-        bootstrap chef-node-1 \     # hostname
-        --ssh-port 22 \             # 22 if from guest-to-guest | N if from host-to-guest
+    # Bootstrap a chef node  ********* BUGGY SECTION during vagrant up *********
+    echo "==> Bootstrapping Chef Node "
+    knife bootstrap chef-node-1 \
+        --ssh-port 22 \
         --ssh-user vagrant \
-        --sudo --identity-file /apps/learn-chef/pems/chef-node-1/private_key \
+        --sudo -i /apps/learn-chef/pems/chef-node-1/private_key \
         --node-name chef-node-1 \
         --run-list 'recipe[learn_chef_httpd]'
     # Bootstrap keypoints
@@ -72,6 +81,8 @@ fi
 #           => Retrieve the cookbook that your cookbook depends on
 #           => Upload your cookbooks to your Chef server
 if [ -f /apps/learn-chef/Berksfile ]; then
+    echo "==> Berkshelf demo"
+
     # Our Berksfile specifies that:
     #   => pull cookbooks from the public Chef Supermarket server [ may be from private server ]
     #   => we want the chef-client cookbook
@@ -79,7 +90,6 @@ if [ -f /apps/learn-chef/Berksfile ]; then
     echo "cookbook 'chef-client'"               >> Berksfile
 
     # Berkshelf downloads the chef-client cookbook and its dependent cookbooks to the ~/.berkshelf/cookbooks directory.
-    cd /apps/learn-chef
     berks install
     knife cookbook list  # list cookbooks available at chef server
 fi
@@ -94,13 +104,15 @@ fi
 #
 # Roles enable you to focus on the function your node performs collectively rather than each of its individual components 
 # (its run-list, node attributes, and so on). For example, you might have a web server role, a database role, or a 
-# load balancer role. 
+# load balancer role
 # 
 # Roles are stored as objects on the Chef server. To create a role, you can use the knife role create command. Another 
 # common way is to create a file (in JSON format) that describes your role and then run the knife role from file command 
 # to upload that file to the Chef server. The advantage of creating a file is that you can store that file in a version 
-# control system such as Git.
+# control system such as Git
 if [ -d /apps/learn-chef/roles ]; then
+    echo "==> Creating Chef Roles Example"
+
     mkdir -p /apps/learn-chef/roles
 
     # This file defines the web role. 
