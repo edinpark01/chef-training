@@ -1,6 +1,6 @@
 # Go beyond the basics
 
-Here we will be making notes out of the module [Go beyond the basics](#https://learn.chef.io/modules/beyond-the-basics#/infrastructure-automation)
+Here we will be making notes from module [Go beyond the basics](#https://learn.chef.io/modules/beyond-the-basics#/infrastructure-automation)
 
 ### Sub-Sections:
 1. [What happens during knife bootstrap ](etc/module01/README.md)
